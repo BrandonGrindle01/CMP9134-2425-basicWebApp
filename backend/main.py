@@ -1,6 +1,7 @@
 from flask import request, jsonify
 from config import app, db
 from models import Contact
+from openverse_client import openverseAPIclient
 
 
 @app.route("/contacts", methods=["GET"])
@@ -59,6 +60,48 @@ def delete_contact(user_id):
     db.session.commit()
 
     return jsonify({"message": "User deleted"}), 200
+
+
+ov_client = openverseAPIclient()
+
+@app.route("/search_images", methods=["GET"])
+def search_images():
+    """
+    Endpoint to search for images using the OpenVerse API
+    Query parameters:
+    - q: Search query (required)
+    - page: Page number (default: 1)
+    - page_size: Results per page (default: 20)
+    - license: Filter by license type
+    - creator: Filter by creator
+    - tags: Comma-separated list of tags
+    """
+    query = request.args.get("q")
+    if not query:
+        return jsonify({"error": "Search query is required"}), 400
+
+    page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("page_size", 20, type=int)
+    license_type = request.args.get("license")
+    creator = request.args.get("creator")
+
+    # Handle tags as a comma-separated list
+    tags = request.args.get("tags")
+    if tags:
+        tags = tags.split(",")
+
+    results = ov_client.search_images(
+        query=query,
+        page=page,
+        page_size=page_size,
+        license_type=license_type,
+        creator=creator,
+        tags=tags
+    )
+
+    return jsonify(results)
+
+
 
 
 if __name__ == "__main__":
