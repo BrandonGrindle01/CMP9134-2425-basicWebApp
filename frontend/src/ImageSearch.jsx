@@ -8,7 +8,7 @@ const ImageSearch = () => {
     const handleSearch = async () => {
         try {
             // Changed from query to q to match the backend expectation
-            const response = await fetch(`/search_images?q=${query}`);
+            const response = await fetch(`http://localhost:5000/search_images?q=${query}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
