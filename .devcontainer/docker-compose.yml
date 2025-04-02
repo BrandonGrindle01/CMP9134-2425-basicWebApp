@@ -12,3 +12,23 @@ services:
       - backend
     ports:
       - "5173:5173"
+
+  # Test services
+  backend-test:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile.test
+    volumes:
+      - ../backend:/app
+    environment:
+      - PYTHONPATH=/app
+    command: pytest -v --cov=. tests/
+
+  frontend-test:
+    build:
+      context: ../frontend
+      dockerfile: Dockerfile.test
+    volumes:
+      - ../frontend:/app
+      - /app/node_modules
+    command: npm test
