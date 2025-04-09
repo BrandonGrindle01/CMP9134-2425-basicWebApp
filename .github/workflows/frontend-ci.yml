@@ -1,0 +1,30 @@
+# .github/workflows/frontend-ci.yml
+name: Frontend CI
+
+on: [push, pull_request]
+
+jobs:
+  test-frontend:
+    name: Test Frontend Code
+    runs-on: ubuntu-latest
+
+    steps:
+      # Step 1: Check out the repository code
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      # Step 2: Set up Node.js environment
+      - name: Set up Node.js
+        uses: actions/setup-node@v4 # Use the official Node.js setup action
+        with:
+          node-version: '22' # Specify Node.js version matching your project
+
+      # Step 3: Install frontend dependencies
+      # Use --prefix to specify the directory containing package.json
+      - name: Install dependencies
+        run: npm install --prefix frontend
+
+      # Step 4: Run frontend tests
+      # Use --prefix to run the command in the frontend directory
+      - name: Run frontend tests
+        run: npm test --prefix frontend
