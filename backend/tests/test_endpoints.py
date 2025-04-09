@@ -45,7 +45,7 @@ def test_update_contact(client, sample_contacts):
                             data=json.dumps(updated_contact),
                             content_type='application/json')
     
-    assert response.status_code == 404
+    assert response.status_code == 200
 
     # Verify the contact was updated
     get_response = client.get('/contacts')
