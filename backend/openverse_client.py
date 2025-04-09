@@ -1,6 +1,9 @@
 from flask import request, jsonify
 import time
 from typing import Dict, Any, Optional, List
+import os
+from dotenv import load_dotenv
+load_dotenv()
 
 import requests
 
@@ -18,9 +21,8 @@ class openverseAPIclient () :
         self.access_token = None
         self.token_expiry = 0
 
-        self.client_id = "9cGtbj7kKDuEhX0k3rc8hcY8AQWktEJq4mHMKyNv"
-        self.client_secret = "UnDnX2QKUrei6yFoh6xpFRoTUt4S9JvISd62JBxkIDGJCRMg12iNwS9I4umjE3ju18TffHZyAI5sBWcj0ubLDswJsBDTcyD8nS0fN4ONm0HOBKy87NUsZhrcQiq6TbDX"
-        
+        self.client_id = os.getenv("OPENVERSE_API_ID")
+        self.client_secret = os.getenv("OPENVERSE_API_SECRET")
 
     def _get_auth_token(self) -> str:
         """
