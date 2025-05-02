@@ -1,85 +1,28 @@
 import React, { useState, useEffect } from "react";
-import ContactList from "./ContactList";
 import "./App.css";
-import ContactForm from "./ContactForm";
 import ImageSearch from "./ImageSearch";
+import Login from "./Login";
+import Register from "./Register";
 
 
 function App() {
-  const [contacts, setContacts] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [currentContact, setCurrentContact] = useState({});
-  const [activeTab, setActiveTab] = useState('contacts');
-
-  useEffect(() => {
-    fetchContacts();
-  }, []);
-
-  const fetchContacts = async () => {
-    const response = await fetch("http://localhost:5000/contacts");
-    const data = await response.json();
-    setContacts(data.contacts);
-    console.log(data.contacts);
-  };
-
-  const closeModal = () => {
-    setIsModalOpen(false)
-    setCurrentContact({})
-  }
-
-  const openCreateModal = () => {
-    if (!isModalOpen) setIsModalOpen(true)
-  }
-
-  const openEditModal = (contact) => {
-    if (isModalOpen) return
-    setCurrentContact(contact)
-    setIsModalOpen(true)
-  }
-
-  const onUpdate = () => {
-    closeModal()
-    fetchContacts()
-  }
+  const [activeTab, setActiveTab] = useState('login');
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   return (
     <>
-            <div className="tab-buttons">
-        <button 
-          className={`tab-button ${activeTab === 'contacts' ? 'active' : ''}`}
-          onClick={() => setActiveTab('contacts')}
-        >
-          Contacts
-        </button>
-        <button 
-          className={`tab-button ${activeTab === 'images' ? 'active' : ''}`}
-          onClick={() => setActiveTab('images')}
-        >
-          Image Search
-        </button>
-      </div>
-
-      {activeTab === 'contacts' && (
-        <div className="contacts-tab">
-          <ContactList contacts={contacts} updateContact={openEditModal} updateCallback={onUpdate}/>
-          <button onClick={openCreateModal}>Create New Contact</button>
-          {isModalOpen && (
-            <div className="modal">
-              <div className="modal-content">
-                <span className="close" onClick={closeModal}>&times;</span>
-                <ContactForm existingContact={currentContact} updateCallback={onUpdate}/>
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
       {activeTab === 'images' && (
         <div className="images-tab">
           <ImageSearch />
         </div>
       )}
-      
+
+      {activeTab === "login" && (
+        <Login setActiveTab={setActiveTab} setIsLoggedIn={setIsLoggedIn} />
+      )}
+      {activeTab === "register" && (
+        <Register setActiveTab={setActiveTab} />
+      )}
     </>
   );
 }

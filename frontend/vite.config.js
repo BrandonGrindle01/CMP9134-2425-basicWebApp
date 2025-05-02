@@ -9,10 +9,10 @@ export default defineConfig({
     allowedHosts: true,
     proxy: {
       '/search_images': 'http://127.0.0.1:5000',
-      '/contacts': 'http://127.0.0.1:5000',
-      '/create_contact': 'http://127.0.0.1:5000',
-      '/update_contact': 'http://127.0.0.1:5000',
-      '/delete_contact': 'http://127.0.0.1:5000'
+      '/register': 'http://127.0.0.1:5000',
+      '/login': 'http://127.0.0.1:5000',
+      '/users': 'http://127.0.0.1:5000',
+      '/history': 'http://127.0.0.1:5000'
     }
   },
 })

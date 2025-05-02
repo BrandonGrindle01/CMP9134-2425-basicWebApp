@@ -1,20 +1,21 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 
 const ImageSearch = () => {
     const [query, setQuery] = useState("");
-    const [images, setImages] = useState([]);  // Initialize as an empty array instead of undefined
+    const [images, setImages] = useState([]);
     const [error, setError] = useState(null);
+    const [history, setHistory] = useState([]);
+    const [showHistory, setShowHistory] = useState(false);
+    const [filter, setFilter] = useState("");
 
     const handleSearch = async () => {
         try {
-            // Changed from query to q to match the backend expectation
             const response = await fetch(`http://localhost:5000/search_images?q=${query}`);
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
 
-            // The API returns results in a nested structure, so we need to extract the actual images
             if (data.results) {
                 setImages(data.results.map(img => ({
                     url: img.thumbnail || img.url,
@@ -23,17 +24,47 @@ const ImageSearch = () => {
             } else {
                 setImages([]);
             }
+            
+            await fetch("http://localhost:5000/history", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ search_q: query })
+            });
+
             setError(null);
         } catch (e) {
             console.error("Error fetching images:", e);
             setError("Error fetching images. Please try again.");
-            setImages([]);  // Set as empty array on error
+            setImages([]);
         }
     };
 
+    const fetchHistory = async (search_q = "") => {
+        const res = await fetch(`http://localhost:5000/history${search_q ? `/search?q=${search_q}` : ""}`);
+        const data = await res.json();
+        setHistory(data);
+    };
+
+    const deleteEntry = async (id) => {
+        await fetch(`http://localhost:5000/history/${id}`, { method: "DELETE" });
+        fetchHistory(filter);
+    };
+
+    const clearAllHistory = async () => {
+        await fetch("http://localhost:5000/history", { method: "DELETE" });
+        fetchHistory();
+    };
+
+    useEffect(() => {
+        if (showHistory) fetchHistory();
+    }, [showHistory]);
+
     return (
         <div>
-            <h2>Image Search</h2>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <h2>Image Search</h2>
+                <button onClick={() => setShowHistory(true)}>View History</button>
+            </div>
             <input
                 type="text"
                 value={query}
@@ -54,6 +85,49 @@ const ImageSearch = () => {
                     <p>No images to display. Try searching for something!</p>
                 )}
             </div>
+
+            {showHistory && (
+                <div style={{
+                    position: "fixed",
+                    top: 0,
+                    left: 0,
+                    width: "100vw",
+                    height: "100vh",
+                    backgroundColor: "rgba(0, 0, 0, 0.5)",
+                    display: "flex",
+                    justifyContent: "center",
+                    alignItems: "center",
+                    zIndex: 1000
+                }}>
+                    <div style={{
+                        backgroundColor: "white",
+                        padding: "20px",
+                        borderRadius: "10px",
+                        width: "400px",
+                        maxHeight: "80vh",
+                        overflowY: "auto"
+                    }}>
+                        <h3>Search History</h3>
+                        <input
+                            type="text"
+                            placeholder="Filter history..."
+                            value={filter}
+                            onChange={(e) => setFilter(e.target.value)}
+                        />
+                        <button onClick={() => fetchHistory(filter)}>Filter</button>
+                        <button onClick={clearAllHistory}>Clear History</button>
+                        <button onClick={() => setShowHistory(false)}>Close</button>
+                        <ul>
+                            {history.map(entry => (
+                                <li key={entry.id} style={{ display: "flex", justifyContent: "space-between" }}>
+                                    {entry.search_q}
+                                    <button onClick={() => deleteEntry(entry.id)}>Delete</button>
+                                </li>
+                            ))}
+                        </ul>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
