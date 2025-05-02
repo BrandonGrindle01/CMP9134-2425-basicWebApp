@@ -25,8 +25,6 @@ def search_images():
     page_size = request.args.get("page_size", 20, type=int)
     license_type = request.args.get("license")
     creator = request.args.get("creator")
-
-    # Handle tags as a comma-separated list
     tags = request.args.get("tags")
     if tags:
         tags = tags.split(",")
@@ -74,9 +72,16 @@ def login():
     user = User.query.filter_by(username=username).first()
     if user and check_password_hash(user.password, password):
         session["user_id"] = user.id
+        print("Logged in user session:", session)
         return jsonify({"message": "Login successful"}), 200
     else:
         return jsonify({"message": "Invalid username or password"}), 401
+    
+
+@app.route("/logout", methods=["POST"])
+def logout():
+    session.clear()
+    return jsonify({"message": "Logged out"}), 200
     
 
 @app.route("/users", methods=["GET"])
@@ -86,34 +91,31 @@ def get_users():
         "id": user.id,
         "username": user.username,
         "email": user.email,
-        "password": user.password  # ⚠️ only for testing!
     } for user in users])
 
-@app.route("/history", methods=["GET", "POST"])
+@app.route("/history", methods=["GET", "POST", "DELETE"])
 def handle_history():
+    if "user_id" not in session:
+        return jsonify({"message": "User not logged in"}), 401
+
     if request.method == "POST":
         data = request.get_json()
         search_q = data.get("search_q")
         if not search_q:
             return jsonify({"message": "No query provided"}), 400
-        new_entry = History(search_q=search_q)
+        new_entry = History(search_q=search_q, user_id=session["user_id"])
         db.session.add(new_entry)
         db.session.commit()
         return jsonify({"message": "Added to history"}), 201
 
     elif request.method == "GET":
-        history = History.query.all()
+        history = History.query.filter_by(user_id=session["user_id"]).all()
         return jsonify([h.to_json() for h in history])
-    
-@app.route("/history/<int:entry_id>", methods=["DELETE"])
-def delete_history_entry(entry_id):
-    entry = History.query.get(entry_id)
-    if not entry:
-        return jsonify({"message": "Entry not found"}), 404
 
-    db.session.delete(entry)
-    db.session.commit()
-    return jsonify({"message": "Entry deleted"}), 200
+    elif request.method == "DELETE":
+        History.query.filter_by(user_id=session["user_id"]).delete()
+        db.session.commit()
+        return jsonify({"message": "All history entries deleted"}), 200
 
 @app.route("/history/search", methods=["GET"])
 def search_history():
@@ -124,9 +126,13 @@ def search_history():
     results = History.query.filter(History.search_q.ilike(f"%{q}%")).all()
     return jsonify([h.to_json() for h in results])
 
+
+@app.route("/whoami", methods=["GET"])
+def whoami():
+    return jsonify({"user_id": session.get("user_id")})
+
 if __name__ == "__main__":
     with app.app_context():
-        db.drop_all()
         db.create_all()
 
     app.run(host="0.0.0.0", port=5000, debug=True)

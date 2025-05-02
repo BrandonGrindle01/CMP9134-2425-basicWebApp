@@ -8,14 +8,17 @@ class User(db.Model):
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
+    history = db.relationship('History', backref='user', lazy=True)
     
 class History(db.Model):
     __tablename__ = 'history'
     id = db.Column(db.Integer, primary_key=True)
     search_q = db.Column(db.String(255), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
 
     def to_json(self):
         return {
             "id": self.id,
-            "search_q": self.search_q
+            "search_q": self.search_q,
+            "user_id": self.user_id
         }
