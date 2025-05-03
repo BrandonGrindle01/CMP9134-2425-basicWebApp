@@ -14,7 +14,8 @@ const Register = ({ setActiveTab }) => {
       const response = await fetch("http://localhost:5000/register", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password })
+        body: JSON.stringify({ username, email, password }),
+        credentials: "include" 
       });
   
       const data = await response.json();

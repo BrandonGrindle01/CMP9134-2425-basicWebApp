@@ -1,25 +1,27 @@
 import React, { useState, useEffect } from "react";
 
-const ImageSearch = () => {
+const AudioSearch = () => {
     const [query, setQuery] = useState("");
-    const [images, setImages] = useState([]);
+    const [results, setAudio] = useState([]);
     const [error, setError] = useState(null);
-    const [history, setHistory] = useState([]);
-    const [showHistory, setShowHistory] = useState(false);
-    const [filter, setFilter] = useState("");
 
     const [license, setLicense] = useState("");
     const [source, setSource] = useState("");
     const [extension, setExtension] = useState("");
+    const [filter, setFilter] = useState("");
+
+    const [history, setHistory] = useState([]);
+    const [showHistory, setShowHistory] = useState(false);
 
     const [page, setPage] = useState(1);
-
+    
     const [hist_License, sethistLicense] = useState("");
     const [hist_Source, sethistSource] = useState("");
     const [hist_Extension, sethistExtension] = useState("");
 
+
     const handleSearch = async (customQuery = query, customLicense = license, customSource = source, customExtension = extension, custompage = page) => {
-        if (!customQuery.trim()) {
+        if (!query.trim()) {
             setError("Please enter a search term.");
             return;
         }
@@ -31,23 +33,20 @@ const ImageSearch = () => {
             ...(customSource && { source: customSource }),
             ...(customExtension && { extension: customExtension }),
         });
-    
+
         try {
-            const response = await fetch(`http://localhost:5000/search_images?${searchParams.toString()}`, {
+            const response = await fetch(`http://localhost:5000/search_audio?${searchParams}`, {
                 credentials: "include"
             });
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const data = await response.json();
-    
+
             if (data.results) {
-                setImages(data.results.map(img => ({
-                    url: img.thumbnail || img.url,
-                    title: img.title || 'Untitled Image'
-                })));
+                setAudio(data.results);
             } else {
-                setImages([]);
+                setAudio([]);
             }
-    
+
             await fetch("http://localhost:5000/history", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -55,27 +54,28 @@ const ImageSearch = () => {
                     search_q: customQuery,
                     license: customLicense,
                     source: customSource,
-                    extension: customExtension
+                    extension: customExtension,
+                    media_type: "audio" 
                 }),
                 credentials: "include"
             });
-    
+
             setError(null);
         } catch (e) {
             console.error("Error fetching images:", e);
-            setError("Error fetching images. Please try again.");
-            setImages([]);
+            setError("Error Fetching audio. Please try again.");
+            setAudio([]);
         }
     };
     const fetchHistory = async (search_q = "") => {
-        const res = await fetch(`http://localhost:5000/history${search_q ? `/search?q=${search_q}` : ""}`, {
+        const response = await fetch(`http://localhost:5000/history${search_q ? `/search?q=${search_q}` : ""}`, {
             credentials: "include"
         });
-        const data = await res.json();
-        const media = data.filter(entry => entry.media_type === "image");
+        const data = await response.json();
+        const media = data.filter(entry => entry.media_type === "audio");
         setHistory(media);
     };
-
+    
     const deleteEntry = async (id) => {
         await fetch(`http://localhost:5000/history/${id}`, {
             method: "DELETE",
@@ -83,23 +83,23 @@ const ImageSearch = () => {
         });
         fetchHistory(filter);
     };
-
+    
     const clearAllHistory = async () => {
-        await fetch("http://localhost:5000/history?media_type=image", {
+        await fetch("http://localhost:5000/history?media_type=audio", {
             method: "DELETE",
             credentials: "include"
         });
         fetchHistory();
     };
-
+    
     useEffect(() => {
         if (showHistory) fetchHistory();
     }, [showHistory]);
-
+    
     return (
         <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <h2>Image Search</h2>
+                <h2>Audio Search</h2>
                 <button onClick={() => setShowHistory(true)}>View History</button>
             </div>
 
@@ -107,11 +107,12 @@ const ImageSearch = () => {
                 type="text"
                 value={query}
                 onChange={(e) => {setQuery(e.target.value); setPage(1);}}
-                onKeyDown={(e) => e.key === "Enter" &&  handleSearch()}
-                placeholder="Search for images..."
+                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+                placeholder="Search for audio..."
             />
             <button onClick={() => handleSearch()} style={{ marginLeft: "10px" }}>Search</button>
-            <div style={{ marginTop: "10px", marginBottom: "20px" }}>
+
+            <div style={{ marginTop: "10px" }}>
                 <label>
                     License:
                     <select value={license} onChange={(e) => setLicense(e.target.value)}>
@@ -122,68 +123,61 @@ const ImageSearch = () => {
                         <option value="pdm">PDM</option>
                     </select>
                 </label>
-
                 <label style={{ marginLeft: "10px" }}>
                     Source:
                     <select value={source} onChange={(e) => setSource(e.target.value)}>
                         <option value="">Any</option>
-                        <option value="flickr">Flickr</option>
-                        <option value="wikimedia">Wikimedia</option>
-                        <option value="stocksnap">StockSnap</option>
-                        <option value="spacex">SpaceX</option>
+                        <option value="jamendo">Jamendo</option>
+                        <option value="freesound">Freesound</option>
                     </select>
                 </label>
-
                 <label style={{ marginLeft: "10px" }}>
                     File Type:
                     <select value={extension} onChange={(e) => setExtension(e.target.value)}>
                         <option value="">Any</option>
-                        <option value="jpg">JPG</option>
-                        <option value="png">PNG</option>
-                        <option value="svg">SVG</option>
+                        <option value="mp3">MP3</option>
+                        <option value="ogg">OGG</option>
+                        <option value="wav">WAV</option>
                     </select>
                 </label>
             </div>
 
             {error && <p style={{ color: "red" }}>{error}</p>}
 
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "10px" }}>
-                {images.length > 0 ? (
-                    images.map((image, index) => (
-                        <div key={index}>
-                            <img src={image.url} alt={image.title} style={{ maxWidth: "100%" }} />
-                            <p>{image.title}</p>
-                        </div>
-                    ))
-                ) : (
-                    <p>No images to display. Try searching for something!</p>
-                )}
-            </div>
+            <ul style={{ marginTop: "20px" }}>
+                {results.map((item, index) => (
+                    <li key={index}>
+                        <strong>{item.title || "Untitled"}</strong> — <em>{item.creator || "Unknown artist"}</em>
+                        <br />
+                        <audio controls src={item.audio_url || item.url} style={{ width: "100%", marginTop: "5px" }} />
+                    </li>
+                ))}
+            </ul>
             <div style={{ marginTop: "20px", display: "flex", justifyContent: "center", gap: "10px" }}>
             <button
                 onClick={() => {
-                if (page > 1) {
-                    const newPage = page - 1;
-                    setPage(newPage);
-                    handleSearch(query, license, source, extension, newPage);
-                }
+                    if (page > 1) {
+                        const newPage = page - 1;
+                        setPage(newPage);
+                        handleSearch(query, license, source, extension, newPage);
+                    }
                 }}
                 disabled={page === 1}
             >
                 Previous
             </button>
 
-            <span>Page {page}</span>
+                <span>Page {page}</span>
 
-            <button
-                onClick={() => {
-                const newPage = page + 1;
-                setPage(newPage);
-                handleSearch(query, license, source, extension, newPage);
-                }}
-            >
-                Next
-            </button>
+                <button
+                    onClick={() => {
+                        const newPage = page + 1;
+                        setPage(newPage);
+                        handleSearch(query, license, source, extension, newPage);
+                    }}
+                >
+                    Next
+                </button>
             </div>
 
             {showHistory && (
@@ -210,17 +204,12 @@ const ImageSearch = () => {
                     }}>
                         <button
                             onClick={() => setShowHistory(false)}
-                            style={{
-                                position: "absolute",
-                                top: "20px",
-                                right: "20px",
-                                padding: "6px 20px"
-                            }}
+                            style={{ position: "absolute", top: "20px", right: "20px", padding: "6px 20px" }}
                         >
                             Close
                         </button>
 
-                        <h3>Search History</h3>
+                        <h3>Audio Search History</h3>
                         <input
                             type="text"
                             placeholder="Search history..."
@@ -245,81 +234,79 @@ const ImageSearch = () => {
                                 Source:
                                 <select value={hist_Source} onChange={(e) => sethistSource(e.target.value)}>
                                     <option value="">Any</option>
-                                    <option value="flickr">Flickr</option>
-                                    <option value="wikimedia">Wikimedia</option>
-                                    <option value="stocksnap">StockSnap</option>
-                                    <option value="spacex">SpaceX</option>
+                                    <option value="jamendo">Jamendo</option>
+                                    <option value="freesound">Freesound</option>
                                 </select>
                             </label>
                             <label style={{ marginLeft: "10px" }}>
                                 File Type:
                                 <select value={hist_Extension} onChange={(e) => sethistExtension(e.target.value)}>
                                     <option value="">Any</option>
-                                    <option value="jpg">JPG</option>
-                                    <option value="png">PNG</option>
-                                    <option value="svg">SVG</option>
+                                    <option value="mp3">MP3</option>
+                                    <option value="ogg">OGG</option>
+                                    <option value="wav">WAV</option>
                                 </select>
                             </label>
                         </div>
-                        <div style={{ textAlign: "right"}}>
-                        <button onClick={clearAllHistory}>Clear History</button>
+
+                        <div style={{ textAlign: "right" }}>
+                            <button onClick={clearAllHistory}>Clear History</button>
                         </div>
+
                         <div>
                             {history
-                            .filter(entry =>
-                                (hist_License === "" || entry.license === hist_License) &&
-                                (hist_Source === "" || entry.source === hist_Source) &&
-                                (hist_Extension === "" || entry.extension === hist_Extension)
-                            )
-                            .map(entry => (
-                                <div
-                                    key={entry.id}
-                                    onClick={() => {
-                                        setQuery(entry.search_q);
-                                        setLicense(entry.license || "");
-                                        setSource(entry.source || "");
-                                        setExtension(entry.extension || "");
-                                        setShowHistory(false);
-                                        handleSearch(entry.search_q, entry.license || "", entry.source || "", entry.extension || "");
-                                      }}
-                                    style={{
-                                        border: "1px solid #ccc",
-                                        borderRadius: "6px",
-                                        padding: "10px",
-                                        marginBottom: "10px",
-                                        backgroundColor: "#f9f9f9",
-                                        cursor: "pointer"
-                                    }}
-                                >
-                                    <strong>{entry.search_q}</strong>
-                                    <div style={{ fontSize: "0.85em", marginTop: "4px", color: "#555" }}>
-                                        {entry.license && <div>License: {entry.license}</div>}
-                                        {entry.source && <div>Source: {entry.source}</div>}
-                                        {entry.extension && <div>File Type: {entry.extension}</div>}
-                                        {entry.timestamp && (
-                                            <div>Searched: {new Date(entry.timestamp).toLocaleString()}</div>
-                                        )}
+                                .filter(entry =>
+                                    (hist_License === "" || entry.license === hist_License) &&
+                                    (hist_Source === "" || entry.source === hist_Source) &&
+                                    (hist_Extension === "" || entry.extension === hist_Extension)
+                                )
+                                .map(entry => (
+                                    <div
+                                        key={entry.id}
+                                        onClick={() => {
+                                            setQuery(entry.search_q);
+                                            setLicense(entry.license || "");
+                                            setSource(entry.source || "");
+                                            setExtension(entry.extension || "");
+                                            setShowHistory(false);
+                                            handleSearch(entry.search_q, entry.license || "", entry.source || "", entry.extension || "");
+                                        }}
+                                        style={{
+                                            border: "1px solid #ccc",
+                                            borderRadius: "6px",
+                                            padding: "10px",
+                                            marginBottom: "10px",
+                                            backgroundColor: "#f9f9f9",
+                                            cursor: "pointer"
+                                        }}
+                                    >
+                                        <strong>{entry.search_q}</strong>
+                                        <div style={{ fontSize: "0.85em", marginTop: "4px", color: "#555" }}>
+                                            {entry.license && <div>License: {entry.license}</div>}
+                                            {entry.source && <div>Source: {entry.source}</div>}
+                                            {entry.extension && <div>File Type: {entry.extension}</div>}
+                                            {entry.timestamp && <div>Searched: {new Date(entry.timestamp).toLocaleString()}</div>}
+                                        </div>
+                                        <div style={{ textAlign: "right", marginTop: "6px" }}>
+                                            <button
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    deleteEntry(entry.id);
+                                                }}
+                                                style={{
+                                                    backgroundColor: "#dc3545",
+                                                    color: "white",
+                                                    padding: "4px 8px",
+                                                    border: "none",
+                                                    borderRadius: "4px",
+                                                    cursor: "pointer"
+                                                }}
+                                            >
+                                                Delete
+                                            </button>
+                                        </div>
                                     </div>
-                                    <div style={{ textAlign: "right", marginTop: "6px" }}>
-                                        <button
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                deleteEntry(entry.id);
-                                            }}
-                                            style={{
-                                                backgroundColor: "#dc3545",
-                                                color: "white",
-                                                padding: "4px 8px",
-                                                border: "none",
-                                                borderRadius: "4px",
-                                                cursor: "pointer"
-                                            }}
-                                        >
-                                            Delete
-                                        </button>
-                                    </div>
-                                </div>
-                            ))}
+                                ))}
                         </div>
                     </div>
                 </div>
@@ -328,4 +315,4 @@ const ImageSearch = () => {
     );
 };
 
-export default ImageSearch;
+export default AudioSearch;
