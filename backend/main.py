@@ -44,6 +44,33 @@ def search_images():
 
     return jsonify(results)
 
+@app.route("/search_audio", methods=["GET"])
+def search_audio():
+    query = request.args.get("q")
+    if not query:
+        return jsonify({"error": "Search query is required"}), 400
+
+    page = request.args.get("page", 1, type=int)
+    page_size = request.args.get("page_size", 20, type=int)
+    license_type = request.args.get("license")
+    creator = request.args.get("creator")
+    source = request.args.get("source")
+    extension = request.args.get("extension")
+    tags = request.args.get("tags")
+
+    results = ov_client.search_audio(
+        query=query,
+        page=page,
+        page_size=page_size,
+        license_type=license_type,
+        source=source,
+        extension=extension,
+        creator=creator,
+        tags=tags
+    )
+
+    return jsonify(results)
+
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -105,6 +132,7 @@ def handle_history():
     if request.method == "POST":
         data = request.get_json()
         search_q = data.get("search_q")
+        media_type = data.get("media_type", "image")
         if not search_q:
             return jsonify({"message": "No query provided"}), 400
         new_entry = History(
@@ -112,6 +140,7 @@ def handle_history():
             license=data.get("license"),
             source=data.get("source"),
             extension=data.get("extension"), 
+            media_type=media_type,
             user_id=session["user_id"])
         db.session.add(new_entry)
         db.session.commit()
@@ -122,7 +151,11 @@ def handle_history():
         return jsonify([h.to_json() for h in history])
 
     elif request.method == "DELETE":
-        History.query.filter_by(user_id=session["user_id"]).delete()
+        media_type = request.args.get("media_type")
+        query = History.query.filter_by(user_id=session["user_id"])
+        if media_type:
+            query = query.filter_by(media_type=media_type)
+        query.delete()
         db.session.commit()
         return jsonify({"message": "All history entries deleted"}), 200
 
@@ -150,7 +183,6 @@ def delete_history_entry(entry_id):
 
 if __name__ == "__main__":
     with app.app_context():
-        db.drop_all()
         db.create_all()
 
     app.run(host="0.0.0.0", port=5000, debug=True)

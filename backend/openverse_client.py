@@ -120,7 +120,62 @@ class openverseAPIclient () :
 
         except requests.exceptions.RequestException as e:
             return {"error": f"Error searching images: {str(e)}"}
+        
+    def search_audio(self, 
+                    query: str, 
+                    page: int = 1, 
+                    page_size: int = 20, 
+                    license_type: Optional[str] = None,
+                    creator: Optional[str] = None,
+                    source: Optional[str] = None,
+                    extension: Optional[str] = None,
+                    tags: Optional[List[str]] = None) -> Dict[str, Any]:
+                #  mature: bool = False) -> Dict[str, Any]
+        """
+        Search for audio on OpenVerse
+        
+        Args:
+            query (str): The search query
+            page (int, optional): Page number for pagination. Defaults to 1.
+            page_size (int, optional): Number of results per page. Defaults to 20.
+            license_type (str, optional): Filter by license type.
+            creator (str, optional): Filter by creator.
+            tags (List[str], optional): List of tags to filter by.
 
-# Usage example:
-# client = OpenVerseClient()
-# results = client.search_images("nature", page=1, page_size=10)
+            added filters for extensions and image source type.
+            
+        Returns:
+            Dict[str, Any]: The search results
+        """
+        token = self._get_auth_token()
+        if not token:
+            return {"error": "Failed to authenticate with OpenVerse API"}
+
+        search_url = f"{self.BASE_URL}/audio/"
+        headers = {
+            "Authorization": f"Bearer {token}"
+        }
+
+        params = {
+            "q": query,
+            "page": page,
+            "page_size": page_size,
+        }
+
+        if license_type:
+            params["license"] = license_type
+        if creator:
+            params["creator"] = creator
+        if tags:
+            params["tags"] = ",".join(tags)
+        if source:
+            params["source"] = source
+        if extension:
+            params["extension"] = extension
+
+        try:
+            response = requests.get(search_url, headers=headers, params=params)
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException as e:
+            return {"error": f"Error searching audio: {str(e)}"}

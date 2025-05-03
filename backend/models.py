@@ -17,6 +17,7 @@ class History(db.Model):
     license = db.Column(db.String(50))
     source = db.Column(db.String(50))
     extension = db.Column(db.String(10))
+    media_type = db.Column(db.String(10), default="image")
     timestamp = db.Column(db.DateTime, default=datetime.now())
 
     def to_json(self):
@@ -27,5 +28,6 @@ class History(db.Model):
             "license": self.license,
             "source": self.source,
             "extension": self.extension,
+            "media_type": self.media_type,
             "timestamp": self.timestamp.isoformat()
         }
