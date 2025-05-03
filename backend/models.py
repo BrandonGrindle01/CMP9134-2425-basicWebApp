@@ -1,7 +1,6 @@
 from config import db
-from flask_sqlalchemy import SQLAlchemy
 from werkzeug.security import generate_password_hash, check_password_hash
-from sqlalchemy import Column, Integer, String
+from datetime import datetime
     
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -15,10 +14,18 @@ class History(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     search_q = db.Column(db.String(255), nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    license = db.Column(db.String(50))
+    source = db.Column(db.String(50))
+    extension = db.Column(db.String(10))
+    timestamp = db.Column(db.DateTime, default=datetime.now())
 
     def to_json(self):
         return {
             "id": self.id,
             "search_q": self.search_q,
-            "user_id": self.user_id
+            "user_id": self.user_id,
+            "license": self.license,
+            "source": self.source,
+            "extension": self.extension,
+            "timestamp": self.timestamp.isoformat()
         }

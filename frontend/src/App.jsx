@@ -24,7 +24,6 @@ function App() {
         <div className="images-tab">
           {/* 🔘 Add logout button */}
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
-            <h2>Welcome!</h2>
             <button onClick={handleLogout}>Logout</button>
           </div>
           <ImageSearch />

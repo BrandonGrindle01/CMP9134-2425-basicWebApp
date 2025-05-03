@@ -25,6 +25,8 @@ def search_images():
     page_size = request.args.get("page_size", 20, type=int)
     license_type = request.args.get("license")
     creator = request.args.get("creator")
+    source = request.args.get("source")
+    extension = request.args.get("extension")
     tags = request.args.get("tags")
     if tags:
         tags = tags.split(",")
@@ -34,6 +36,8 @@ def search_images():
         page=page,
         page_size=page_size,
         license_type=license_type,
+        source=source,
+        extension=extension,
         creator=creator,
         tags=tags
     )
@@ -103,7 +107,12 @@ def handle_history():
         search_q = data.get("search_q")
         if not search_q:
             return jsonify({"message": "No query provided"}), 400
-        new_entry = History(search_q=search_q, user_id=session["user_id"])
+        new_entry = History(
+            search_q=search_q,
+            license=data.get("license"),
+            source=data.get("source"),
+            extension=data.get("extension"), 
+            user_id=session["user_id"])
         db.session.add(new_entry)
         db.session.commit()
         return jsonify({"message": "Added to history"}), 201
@@ -126,13 +135,22 @@ def search_history():
     results = History.query.filter(History.search_q.ilike(f"%{q}%")).all()
     return jsonify([h.to_json() for h in results])
 
+@app.route("/history/<int:entry_id>", methods=["DELETE"])
+def delete_history_entry(entry_id):
+    if "user_id" not in session:
+        return jsonify({"message": "User not logged in"}), 401
 
-@app.route("/whoami", methods=["GET"])
-def whoami():
-    return jsonify({"user_id": session.get("user_id")})
+    entry = History.query.filter_by(id=entry_id, user_id=session["user_id"]).first()
+    if not entry:
+        return jsonify({"message": "History entry not found"}), 404
+
+    db.session.delete(entry)
+    db.session.commit()
+    return jsonify({"message": "Entry deleted"}), 200
 
 if __name__ == "__main__":
     with app.app_context():
+        db.drop_all()
         db.create_all()
 
     app.run(host="0.0.0.0", port=5000, debug=True)

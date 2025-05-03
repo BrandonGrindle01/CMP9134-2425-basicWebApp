@@ -13,12 +13,12 @@ class openverseAPIclient () :
 
     BASE_URL = "https://api.openverse.org/v1"
 
+    #added a shared cache for the key- due to adding sessions the auth was being called too much
+    access_token = None
+    token_expiry = 0
 
 
     def __init__(self):
-        self.access_token = None
-        self.token_expiry = 0
-
         self.client_id = os.getenv("OPENVERSE_API_ID")
         self.client_secret = os.getenv("OPENVERSE_API_SECRET")
 
@@ -32,11 +32,9 @@ class openverseAPIclient () :
         """
         current_time = time.time()
 
-        # Return cached token if it's still valid
-        if self.access_token and current_time < self.token_expiry:
-            return self.access_token
+        if openverseAPIclient.access_token and current_time < openverseAPIclient.token_expiry:
+            return openverseAPIclient.access_token
 
-        # Request a new token
         auth_url = f"{self.BASE_URL}/auth_tokens/token/"
         headers = {
             "Content-Type": "application/x-www-form-urlencoded",
@@ -52,10 +50,10 @@ class openverseAPIclient () :
             response.raise_for_status()
 
             token_data = response.json()
-            self.access_token = token_data.get("access_token")
+            openverseAPIclient.access_token = token_data.get("access_token")
             # Set expiry time (usually expires in 1 hour)
             expires_in = token_data.get("expires_in", 3600)
-            self.token_expiry = current_time + expires_in
+            openverseAPIclient.token_expiry = current_time + expires_in
 
             return self.access_token
 
@@ -69,6 +67,8 @@ class openverseAPIclient () :
                     page_size: int = 20, 
                     license_type: Optional[str] = None,
                     creator: Optional[str] = None,
+                    source: Optional[str] = None,
+                    extension: Optional[str] = None,
                     tags: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Search for images on OpenVerse
@@ -80,6 +80,8 @@ class openverseAPIclient () :
             license_type (str, optional): Filter by license type.
             creator (str, optional): Filter by creator.
             tags (List[str], optional): List of tags to filter by.
+
+            added filters for extensions and image source type.
             
         Returns:
             Dict[str, Any]: The search results
@@ -106,7 +108,11 @@ class openverseAPIclient () :
             params["creator"] = creator
         if tags:
             params["tags"] = ",".join(tags)
-
+        if source:
+            params["source"] = source
+        if extension:
+            params["extension"] = extension
+ 
         try:
             response = requests.get(search_url, headers=headers, params=params)
             response.raise_for_status()
