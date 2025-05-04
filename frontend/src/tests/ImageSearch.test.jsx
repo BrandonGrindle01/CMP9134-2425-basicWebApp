@@ -1,3 +1,4 @@
+
 import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom';
@@ -15,7 +16,6 @@ const mockHistory = [
   { id: 2, search_q: 'dog', license: 'by', source: 'wikimedia', extension: 'png', media_type: 'image', timestamp: new Date().toISOString() },
 ];
 
-// Global fetch mock
 beforeEach(() => {
   global.fetch = jest.fn((url, options) => {
     if (url.includes('/search_images')) {
@@ -51,7 +51,7 @@ describe('ImageSearch Full Integration', () => {
   test('performs search and displays images', async () => {
     render(<ImageSearch />);
 
-    const input = screen.getByRole('textbox', { name: /search for images/i });
+    const input = screen.getByPlaceholderText(/search for images/i);
     fireEvent.change(input, { target: { value: 'cat' } });
 
     fireEvent.click(screen.getByRole('button', { name: /search/i }));
@@ -71,10 +71,10 @@ describe('ImageSearch Full Integration', () => {
       expect(screen.getByRole('heading', { name: /search history/i })).toBeInTheDocument();
     });
 
-    const histInput = screen.getByRole('textbox', { name: /search history/i });
+    const histInput = screen.getByPlaceholderText(/search history/i);
     fireEvent.change(histInput, { target: { value: 'cat' } });
 
-    fireEvent.click(screen.getAllByRole('button', { name: /search history/i })[0]);
+    fireEvent.click(screen.getByRole('button', { name: /^search history$/i }));
 
     await waitFor(() => {
       expect(screen.getByText('cat')).toBeInTheDocument();
@@ -85,7 +85,7 @@ describe('ImageSearch Full Integration', () => {
   test('applies filters before searching', async () => {
     render(<ImageSearch />);
 
-    fireEvent.change(screen.getByRole('textbox', { name: /search for images/i }), {
+    fireEvent.change(screen.getByPlaceholderText(/search for images/i), {
       target: { value: 'dog' }
     });
 
