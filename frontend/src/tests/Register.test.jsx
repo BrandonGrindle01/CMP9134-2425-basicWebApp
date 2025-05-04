@@ -10,7 +10,6 @@ describe('Register Component', () => {
     jest.clearAllMocks();
   });
 
-  // Mock the global fetch function
   beforeAll(() => {
     global.fetch = jest.fn();
   });
@@ -18,9 +17,9 @@ describe('Register Component', () => {
   test('renders registration form fields', () => {
     render(<Register setActiveTab={mockSetActiveTab} />);
 
-    expect(screen.getByPlaceholderText(/username/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/email/i)).toBeInTheDocument();
-    expect(screen.getByPlaceholderText(/password/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/username/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/email/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/password/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /register/i })).toBeInTheDocument();
   });
 
@@ -43,20 +42,23 @@ describe('Register Component', () => {
 
     render(<Register setActiveTab={mockSetActiveTab} />);
 
-    fireEvent.change(screen.getByPlaceholderText(/username/i), {
+    fireEvent.change(screen.getByLabelText(/username/i), {
       target: { value: 'newuser' },
     });
-    fireEvent.change(screen.getByPlaceholderText(/email/i), {
+    fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: 'newuser@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+    fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: 'password123' },
     });
 
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith('http://localhost:5000/register', expect.any(Object));
+      expect(fetch).toHaveBeenCalledWith(
+        'http://localhost:5000/register',
+        expect.objectContaining({ method: 'POST' })
+      );
       expect(mockSetActiveTab).toHaveBeenCalledWith('login');
     });
   });
@@ -70,13 +72,13 @@ describe('Register Component', () => {
 
     render(<Register setActiveTab={mockSetActiveTab} />);
 
-    fireEvent.change(screen.getByPlaceholderText(/username/i), {
+    fireEvent.change(screen.getByLabelText(/username/i), {
       target: { value: 'existinguser' },
     });
-    fireEvent.change(screen.getByPlaceholderText(/email/i), {
+    fireEvent.change(screen.getByLabelText(/email/i), {
       target: { value: 'existing@example.com' },
     });
-    fireEvent.change(screen.getByPlaceholderText(/password/i), {
+    fireEvent.change(screen.getByLabelText(/password/i), {
       target: { value: 'password123' },
     });
 

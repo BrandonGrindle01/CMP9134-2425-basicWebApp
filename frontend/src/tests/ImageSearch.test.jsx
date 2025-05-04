@@ -51,9 +51,9 @@ describe('ImageSearch Full Integration', () => {
   test('performs search and displays images', async () => {
     render(<ImageSearch />);
 
-    fireEvent.change(screen.getByPlaceholderText(/search for images/i), {
-      target: { value: 'cat' }
-    });
+    const input = screen.getByRole('textbox', { name: /search for images/i });
+    fireEvent.change(input, { target: { value: 'cat' } });
+
     fireEvent.click(screen.getByRole('button', { name: /search/i }));
 
     await waitFor(() => {
@@ -65,17 +65,16 @@ describe('ImageSearch Full Integration', () => {
   test('opens and filters search history', async () => {
     render(<ImageSearch />);
 
-    fireEvent.click(screen.getByText(/view history/i));
+    fireEvent.click(screen.getByRole('button', { name: /view history/i }));
 
     await waitFor(() => {
-      expect(screen.getByText(/search history/i)).toBeInTheDocument();
+      expect(screen.getByRole('heading', { name: /search history/i })).toBeInTheDocument();
     });
 
-    fireEvent.change(screen.getByPlaceholderText(/search history/i), {
-      target: { value: 'cat' }
-    });
+    const histInput = screen.getByRole('textbox', { name: /search history/i });
+    fireEvent.change(histInput, { target: { value: 'cat' } });
 
-    fireEvent.click(screen.getByText(/search history/i));
+    fireEvent.click(screen.getAllByRole('button', { name: /search history/i })[0]);
 
     await waitFor(() => {
       expect(screen.getByText('cat')).toBeInTheDocument();
@@ -86,7 +85,7 @@ describe('ImageSearch Full Integration', () => {
   test('applies filters before searching', async () => {
     render(<ImageSearch />);
 
-    fireEvent.change(screen.getByPlaceholderText(/search for images/i), {
+    fireEvent.change(screen.getByRole('textbox', { name: /search for images/i }), {
       target: { value: 'dog' }
     });
 
@@ -104,22 +103,25 @@ describe('ImageSearch Full Integration', () => {
 
   test('clears all history', async () => {
     render(<ImageSearch />);
-    fireEvent.click(screen.getByText(/view history/i));
+    fireEvent.click(screen.getByRole('button', { name: /view history/i }));
 
     await waitFor(() => {
       expect(screen.getByText('cat')).toBeInTheDocument();
     });
 
-    fireEvent.click(screen.getByText(/clear history/i));
+    fireEvent.click(screen.getByRole('button', { name: /clear history/i }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/history?media_type=image'), expect.objectContaining({ method: 'DELETE' }));
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/history?media_type=image'),
+        expect.objectContaining({ method: 'DELETE' })
+      );
     });
   });
 
   test('deletes individual entry', async () => {
     render(<ImageSearch />);
-    fireEvent.click(screen.getByText(/view history/i));
+    fireEvent.click(screen.getByRole('button', { name: /view history/i }));
 
     await waitFor(() => {
       expect(screen.getByText('cat')).toBeInTheDocument();
@@ -128,7 +130,10 @@ describe('ImageSearch Full Integration', () => {
     fireEvent.click(screen.getAllByText('Delete')[0]);
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(expect.stringContaining('/history/1'), expect.objectContaining({ method: 'DELETE' }));
+      expect(fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/history/1'),
+        expect.objectContaining({ method: 'DELETE' })
+      );
     });
   });
 });
