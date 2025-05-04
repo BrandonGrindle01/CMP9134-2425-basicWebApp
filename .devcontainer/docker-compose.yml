@@ -1,10 +1,10 @@
-version: '3.8'
-
 services:
   backend:
     build: ../backend
     ports:
       - "5000:5000"
+    env_file:
+      - ../backend/.env
 
   frontend:
     build: ../frontend
@@ -23,6 +23,8 @@ services:
     environment:
       - PYTHONPATH=/app
     command: pytest -v --cov=. tests/
+    env_file:
+      - ../backend/.env
 
   frontend-test:
     build:

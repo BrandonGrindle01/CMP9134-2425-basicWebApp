@@ -130,7 +130,6 @@ class openverseAPIclient () :
                     source: Optional[str] = None,
                     extension: Optional[str] = None,
                     tags: Optional[List[str]] = None) -> Dict[str, Any]:
-                #  mature: bool = False) -> Dict[str, Any]
         """
         Search for audio on OpenVerse
         

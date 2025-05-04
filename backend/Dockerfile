@@ -5,6 +5,7 @@ COPY requirements.txt .
 RUN pip install -r requirements.txt
 RUN pip install flask
 RUN pip install requests
+RUN pip install python-dotenv
 COPY . .
 
 CMD ["python", "main.py"]

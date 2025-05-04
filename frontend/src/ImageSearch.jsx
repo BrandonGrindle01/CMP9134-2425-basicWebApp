@@ -29,7 +29,7 @@ const ImageSearch = () => {
             page: custompage,
             ...(customLicense && { license: customLicense }),
             ...(customSource && { source: customSource }),
-            ...(customExtension && { extension: customExtension }),
+            ...(customExtension && { extension: customExtension })
         });
     
         try {

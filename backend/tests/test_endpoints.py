@@ -1,73 +1,111 @@
 import json
 import pytest
-def test_get_contacts(client, sample_contacts):
-    """Test retrieving all contacts."""
-    response = client.get('/contacts')
-    data = json.loads(response.data)
+from werkzeug.security import generate_password_hash
+from config import app, db
+from models import User, History
 
-    assert response.status_code == 200
-    assert len(data['contacts']) == 3
-    assert data['contacts'][0]['firstName'] == 'John'
+@pytest.fixture
+def test_client():
+    app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///:memory:"
+    app.config["TESTING"] = True
+    with app.app_context():
+        db.create_all()
+        yield app.test_client()
+        db.session.remove()
+        db.drop_all()
 
-def test_create_contact(client):
-    """Test creating a new contact."""
-    new_contact = {
-        "firstName": "Test",
-        "lastName": "User",
-        "email": "test@example.com"
-    }
 
-    response = client.post('/create_contact',
-                            data=json.dumps(new_contact),
-                            content_type='application/json')
-    
+def register_user(client, username="testuser", email="test@example.com", password="password"):
+    return client.post("/register", json={
+        "username": username,
+        "email": email,
+        "password": password
+    })
+
+
+def login_user(client, username="testuser", password="password"):
+    return client.post("/login", json={
+        "username": username,
+        "password": password
+    })
+
+
+def test_registration_and_login(test_client):
+    # Register
+    response = register_user(test_client)
     assert response.status_code == 201
 
-    # Verify the contact was created
-    get_response = client.get('/contacts')
-    data = json.loads(get_response.data)
-    emails = [contact['email'] for contact in data['contacts']]
-    assert "test@example.com" in emails
+    # Login
+    response = login_user(test_client)
+    assert response.status_code == 200
+    assert b"Login successful" in response.data
 
-def test_update_contact(client, sample_contacts):
-    """Test updating an existing contact."""
-    # Get the ID of the first contact
-    response = client.get('/contacts')
-    data = json.loads(response.data)
-    contact_id = data['contacts'][0]['id']
 
-    updated_contact = {
-        "firstName": "UpdatedName",
-        "lastName": "UpdatedLastName",
-        "email": "updated@example.com"
+def test_search_images_requires_login(test_client):
+    response = test_client.get("/search_images?q=cats")
+    assert response.status_code == 200  # Search does not require login (based on your code)
+
+
+def test_add_and_get_history(test_client):
+    # Register + Login
+    register_user(test_client)
+    login_user(test_client)
+
+    # Add to history
+    history_entry = {
+        "search_q": "cats",
+        "license": "cc0",
+        "source": "flickr",
+        "extension": "jpg",
+        "media_type": "image"
     }
-    response = client.patch(f'/update_contact/{contact_id}',
-                            data=json.dumps(updated_contact),
-                            content_type='application/json')
-    
+    response = test_client.post("/history", json=history_entry)
+    assert response.status_code == 201
+
+    # Get history
+    response = test_client.get("/history")
+    assert response.status_code == 200
+    data = response.get_json()
+    assert len(data) == 1
+    assert data[0]["search_q"] == "cats"
+
+
+def test_delete_specific_history_entry(test_client):
+    # Register + Login
+    register_user(test_client)
+    login_user(test_client)
+
+    # Add to history
+    test_client.post("/history", json={"search_q": "dogs", "media_type": "image"})
+
+    # Fetch entry
+    response = test_client.get("/history")
+    entry_id = response.get_json()[0]["id"]
+
+    # Delete entry
+    response = test_client.delete(f"/history/{entry_id}")
     assert response.status_code == 200
 
-    # Verify the contact was updated
-    get_response = client.get('/contacts')
-    data = json.loads(get_response.data)
-    for contact in data['contacts']:
-        if contact['id'] == contact_id:
-            assert contact['firstName'] == "UpdatedName"
-            assert contact['email'] == "updated@example.com"
+    # Confirm deletion
+    response = test_client.get("/history")
+    assert len(response.get_json()) == 0
 
-def test_delete_contact(client, sample_contacts):
-    """Test deleting a contact."""
-    # Get the ID of the first contact
-    response = client.get('/contacts')
-    data = json.loads(response.data)
-    contact_id = data['contacts'][0]['id']
-    initial_count = len(data['contacts'])
 
-    # Delete the contact
-    response = client.delete(f'/delete_contact/{contact_id}')
+def test_clear_all_history(test_client):
+    register_user(test_client)
+    login_user(test_client)
+
+    test_client.post("/history", json={"search_q": "sunsets", "media_type": "image"})
+    test_client.post("/history", json={"search_q": "dogs", "media_type": "image"})
+
+    # Confirm entries exist
+    response = test_client.get("/history")
+    assert len(response.get_json()) == 2
+
+    # Clear all history
+    response = test_client.delete("/history?media_type=image")
     assert response.status_code == 200
 
-    # Verify the contact was deleted
-    get_response = client.get('/contacts')
-    data = json.loads(get_response.data)
-    assert len(data['contacts']) == initial_count - 1
+    # Confirm cleared
+    response = test_client.get("/history")
+    assert len(response.get_json()) == 0

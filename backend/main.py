@@ -5,6 +5,9 @@ from models import User, History
 from werkzeug.security import generate_password_hash, check_password_hash
 ov_client = openverseAPIclient()
 
+from dotenv import load_dotenv
+load_dotenv()
+
 @app.route("/search_images", methods=["GET"])
 def search_images():
     """
@@ -57,7 +60,6 @@ def search_audio():
     source = request.args.get("source")
     extension = request.args.get("extension")
     tags = request.args.get("tags")
-
     results = ov_client.search_audio(
         query=query,
         page=page,
@@ -159,13 +161,22 @@ def handle_history():
         db.session.commit()
         return jsonify({"message": "All history entries deleted"}), 200
 
+
 @app.route("/history/search", methods=["GET"])
 def search_history():
+    if "user_id" not in session:
+        return jsonify({"error": "Unauthorized"}), 401
+
     q = request.args.get("q", "")
+    user_id = session["user_id"]
+
     if not q:
         return jsonify([])
 
-    results = History.query.filter(History.search_q.ilike(f"%{q}%")).all()
+    results = History.query.filter(
+        History.user_id == user_id,
+        History.search_q.ilike(f"%{q}%")
+    ).all()
     return jsonify([h.to_json() for h in results])
 
 @app.route("/history/<int:entry_id>", methods=["DELETE"])

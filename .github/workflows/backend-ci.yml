@@ -10,8 +10,8 @@ jobs:
     runs-on: ubuntu-latest # Runner environment
 
     env:
-        OPENVERSE_API_ID: $ { { secrets.OPENVERSE_API_ID } }
-        OPENVERSE_API_SECRET: $ { { secrets.OPENVERSE_API_SECRET } }
+        OPENVERSE_API_ID: ${{ secrets.OPENVERSE_API_ID }}
+        OPENVERSE_API_SECRET: ${{ secrets.OPENVERSE_API_SECRET }}
 
     steps:
       # Step 1: Check out the repository code
