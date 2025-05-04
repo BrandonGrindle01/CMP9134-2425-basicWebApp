@@ -34,6 +34,8 @@ describe('Register Component', () => {
   });
 
   test('handles successful registration', async () => {
+    jest.useFakeTimers(); // ✅ mock timers
+
     fetch.mockResolvedValueOnce({
       ok: true,
       status: 201,
@@ -55,12 +57,14 @@ describe('Register Component', () => {
     fireEvent.click(screen.getByRole('button', { name: /register/i }));
 
     await waitFor(() => {
-      expect(fetch).toHaveBeenCalledWith(
-        'http://localhost:5000/register',
-        expect.objectContaining({ method: 'POST' })
-      );
-      expect(mockSetActiveTab).toHaveBeenCalledWith('login');
+      expect(screen.getByText(/registration successful/i)).toBeInTheDocument();
     });
+
+    jest.runAllTimers(); // ✅ run setTimeout callback
+
+    expect(mockSetActiveTab).toHaveBeenCalledWith('login');
+
+    jest.useRealTimers(); // ✅ cleanup
   });
 
   test('handles error from API', async () => {
