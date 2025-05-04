@@ -13,3 +13,6 @@ app.config["SESSION_COOKIE_SAMESITE"] = "Lax"
 app.config["SESSION_COOKIE_SECURE"] = False 
 
 db = SQLAlchemy(app)
+
+from main import *
+

@@ -43,7 +43,7 @@ def test_registration_and_login(test_client):
 
 def test_search_images_requires_login(test_client):
     response = test_client.get("/search_images?q=cats")
-    assert response.status_code == 200  # Search does not require login (based on your code)
+    assert response.status_code == 200  
 
 
 def test_add_and_get_history(test_client):
