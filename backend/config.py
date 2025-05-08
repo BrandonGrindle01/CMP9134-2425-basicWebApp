@@ -14,5 +14,5 @@ app.config["SESSION_COOKIE_SECURE"] = False
 
 db = SQLAlchemy(app)
 
-from main import *
+#from main import *
 

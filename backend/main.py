@@ -12,7 +12,7 @@ load_dotenv()
 
 #create a query to send the the API (HTTP REQUEST)
 @app.route("/search_images", methods=["GET"])
-def search_images():
+def search_images_rt():
     """
     Endpoint to search for images using the OpenVerse API
     Query parameters:
