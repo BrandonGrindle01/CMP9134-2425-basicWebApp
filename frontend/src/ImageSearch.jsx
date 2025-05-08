@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+//see audio search for comments due to similarity
 const ImageSearch = () => {
     const [query, setQuery] = useState("");
     const [images, setImages] = useState([]);

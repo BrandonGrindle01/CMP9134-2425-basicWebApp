@@ -1,3 +1,4 @@
+#install all required dependencies and images. define joint workspace.
 FROM  mcr.microsoft.com/devcontainers/python:3.10
 
 WORKDIR /workspace

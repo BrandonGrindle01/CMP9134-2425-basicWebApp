@@ -4,7 +4,7 @@ from config import app, db
 from models import User, History
 from werkzeug.security import generate_password_hash
 
-
+#test model creation
 @pytest.fixture(scope='function')
 def test_client():
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
@@ -15,7 +15,7 @@ def test_client():
         db.session.remove()
         db.drop_all()
 
-
+#test user component
 def test_user_model_creation(test_client):
     """Test creating a new User instance."""
     user = User(username="tester", email="tester@example.com", password=generate_password_hash("password"))
@@ -27,7 +27,7 @@ def test_user_model_creation(test_client):
     assert saved_user.email == "tester@example.com"
     assert saved_user.password != "password"  # Should be hashed
 
-
+#test history component
 def test_history_model_creation_and_json(test_client):
     """Test History model creation and its JSON output."""
     user = User(username="tester", email="tester@example.com", password=generate_password_hash("password"))

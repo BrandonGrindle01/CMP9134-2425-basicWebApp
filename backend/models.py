@@ -1,14 +1,16 @@
 from config import db
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-    
+
+#user component- stores id, name, email, pass and history securely within the SQLAlchemy database
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     username = db.Column(db.String(80), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password = db.Column(db.String(200), nullable=False)
     history = db.relationship('History', backref='user', lazy=True)
-    
+
+#history component- store all relevent history filters as well as a reference to specific users related to select history.
 class History(db.Model):
     __tablename__ = 'history'
     id = db.Column(db.Integer, primary_key=True)

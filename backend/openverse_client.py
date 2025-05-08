@@ -5,6 +5,7 @@ import os
 
 import requests
 
+# provided class for API access
 class openverseAPIclient () :
     """
     A client for the OpenVerse API (https://api.openverse.org/v1/)

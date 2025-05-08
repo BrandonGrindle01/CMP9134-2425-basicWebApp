@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+//get user log in, set user login state, navigate to main interface
 const Login = ({ setActiveTab, setIsLoggedIn }) => {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
@@ -29,7 +29,7 @@ const Login = ({ setActiveTab, setIsLoggedIn }) => {
       setError("Login error: Something went wrong. Please try again. " + err.message);
     }
   };
-
+//UI for login plus button for registering an account.
   return (
     <div style={{
       display: "flex",

@@ -5,7 +5,7 @@ import Login from "./Login";
 import Register from "./Register";
 import AudioSearch from "./AudioSearch";
 
-
+//app frontend functionality, handles tab transitions and logout procedure as well as initial interface.
 function App() {
   const [activeTab, setActiveTab] = useState('login');
   const [isLoggedIn, setIsLoggedIn] = useState(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-
+//react frontend audiosearch UI and query system
 const AudioSearch = () => {
     const [query, setQuery] = useState("");
     const [results, setAudio] = useState([]);
@@ -19,7 +19,7 @@ const AudioSearch = () => {
     const [hist_Source, sethistSource] = useState("");
     const [hist_Extension, sethistExtension] = useState("");
 
-
+//search for audio through key filters intakes perameters to re-search through history
     const handleSearch = async (customQuery = query, customLicense = license, customSource = source, customExtension = extension, custompage = page) => {
         if (!query.trim()) {
             setError("Please enter a search term.");
@@ -46,7 +46,7 @@ const AudioSearch = () => {
             } else {
                 setAudio([]);
             }
-
+//search for audio-filter by source, license and extentsion.
             await fetch("http://localhost:5000/history", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -67,6 +67,7 @@ const AudioSearch = () => {
             setAudio([]);
         }
     };
+    //get user history for audio searches
     const fetchHistory = async (search_q = "") => {
         const response = await fetch(`http://localhost:5000/history${search_q ? `/search?q=${search_q}` : ""}`, {
             credentials: "include"
@@ -75,7 +76,7 @@ const AudioSearch = () => {
         const media = data.filter(entry => entry.media_type === "audio");
         setHistory(media);
     };
-    
+    //delete a single entry
     const deleteEntry = async (id) => {
         await fetch(`http://localhost:5000/history/${id}`, {
             method: "DELETE",
@@ -83,7 +84,7 @@ const AudioSearch = () => {
         });
         fetchHistory(filter);
     };
-    
+    //clear full history
     const clearAllHistory = async () => {
         await fetch("http://localhost:5000/history?media_type=audio", {
             method: "DELETE",
@@ -91,11 +92,12 @@ const AudioSearch = () => {
         });
         fetchHistory();
     };
-    
+    //button integration
     useEffect(() => {
         if (showHistory) fetchHistory();
     }, [showHistory]);
     
+    //UI interface to show functionality
     return (
         <div>
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>

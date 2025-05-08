@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-
+//linked to Login, creates an account and links it to the database. hashes passwords for security.
 const Register = ({ setActiveTab }) => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
@@ -10,7 +10,6 @@ const Register = ({ setActiveTab }) => {
   const handleRegister = async (e) => {
     e.preventDefault();
 
-    // 🛑 Validation for empty fields
     if (!username || !email || !password) {
       setError("All fields are required");
       return;
@@ -35,7 +34,7 @@ const Register = ({ setActiveTab }) => {
       setError("Something went wrong. Please try again. " + err.message);
     }
   };
-
+//simple small register ui, provides link back to login.
   return (
     <div style={{
       display: "flex",

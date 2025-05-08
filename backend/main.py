@@ -1,3 +1,4 @@
+#import flask backend with dependencies and openverse client
 from flask import request, jsonify, session
 from config import app, db
 from openverse_client import openverseAPIclient
@@ -5,9 +6,11 @@ from models import User, History
 from werkzeug.security import generate_password_hash, check_password_hash
 ov_client = openverseAPIclient()
 
+#get API keys (local)
 from dotenv import load_dotenv
 load_dotenv()
 
+#create a query to send the the API (HTTP REQUEST)
 @app.route("/search_images", methods=["GET"])
 def search_images():
     """
@@ -20,10 +23,11 @@ def search_images():
     - creator: Filter by creator
     - tags: Comma-separated list of tags
     """
+    #error handling to ensure non null input
     query = request.args.get("q")
     if not query:
         return jsonify({"error": "Search query is required"}), 400
-
+#filter arguements
     page = request.args.get("page", 1, type=int)
     page_size = request.args.get("page_size", 20, type=int)
     license_type = request.args.get("license")
@@ -34,6 +38,7 @@ def search_images():
     if tags:
         tags = tags.split(",")
 
+#search params and filters
     results = ov_client.search_images(
         query=query,
         page=page,
@@ -47,6 +52,7 @@ def search_images():
 
     return jsonify(results)
 
+#see above comments
 @app.route("/search_audio", methods=["GET"])
 def search_audio():
     query = request.args.get("q")
@@ -73,6 +79,7 @@ def search_audio():
 
     return jsonify(results)
 
+#register a user to the SQL database, securly hashing their password to ensure encryption.
 @app.route("/register", methods=["POST"])
 def register():
     data = request.get_json()
@@ -93,6 +100,7 @@ def register():
 
     return jsonify({"message": "Registration successful"}), 201
 
+#test hashed paswords along with username to either reject connection or accept connection and start a session
 @app.route("/login", methods=["POST"])
 def login():
     data = request.get_json()
@@ -110,13 +118,13 @@ def login():
     else:
         return jsonify({"message": "Invalid username or password"}), 401
     
-
+#disconnect user from session
 @app.route("/logout", methods=["POST"])
 def logout():
     session.clear()
     return jsonify({"message": "Logged out"}), 200
     
-
+#get all users, used for administrative and testing purposes
 @app.route("/users", methods=["GET"])
 def get_users():
     users = User.query.all()
@@ -126,6 +134,7 @@ def get_users():
         "email": user.email,
     } for user in users])
 
+#handle the storage, viewing and deletion of search history. allow filtering for specific history entries.
 @app.route("/history", methods=["GET", "POST", "DELETE"])
 def handle_history():
     if "user_id" not in session:
@@ -162,6 +171,7 @@ def handle_history():
         return jsonify({"message": "All history entries deleted"}), 200
 
 
+#search for specific history entries
 @app.route("/history/search", methods=["GET"])
 def search_history():
     if "user_id" not in session:
@@ -179,6 +189,7 @@ def search_history():
     ).all()
     return jsonify([h.to_json() for h in results])
 
+#delete selected entries from history
 @app.route("/history/<int:entry_id>", methods=["DELETE"])
 def delete_history_entry(entry_id):
     if "user_id" not in session:
@@ -192,6 +203,7 @@ def delete_history_entry(entry_id):
     db.session.commit()
     return jsonify({"message": "Entry deleted"}), 200
 
+#run system
 if __name__ == "__main__":
     with app.app_context():
         db.create_all()
